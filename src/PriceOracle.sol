@@ -8,7 +8,7 @@ contract PriceOracle {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     IUniswapV3Factory immutable factory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
 
-    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint) {
+    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint256) {
         return getOracleQuote(token, _toUint128(amount), twapPeriod);
     }
 

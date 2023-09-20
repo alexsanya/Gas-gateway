@@ -7,9 +7,9 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 interface IGasStation {
-    function tokens() external returns (address[] memory);
-    function comission() external returns (uint);
-    function twapPeriod() external returns (uint32);
+    function tokens() external view returns (address[] memory);
+    function comission() external view returns (uint);
+    function twapPeriod() external view returns (uint32);
 }
 
 interface IGasGateway {
@@ -19,13 +19,13 @@ interface IGasGateway {
 }
 
 interface IPriceOracle {
-    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint);
+    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint256);
 }
 
 contract GasGateway is IGasGateway, Ownable {
     using Address for address payable;
 
-    uint public deposit_value;
+    uint public depositValue;
     IPriceOracle immutable priceOracle;
     mapping(address => address[]) public gasStations;
     mapping(address => uint) private deposits;
@@ -36,12 +36,12 @@ contract GasGateway is IGasGateway, Ownable {
     }
 
     function setDeposit(uint value) external onlyOwner {
-        deposit_value = value;
+        depositValue = value;
     }
 
     function register() external payable {
         require(payable(msg.sender).isContract(), "Sender is not a contract");
-        require(msg.value >= deposit_value, "Not enough ETH for deposit");
+        require(msg.value >= depositValue, "Not enough ETH for deposit");
         require(deposits[msg.sender] == 0, "Already registered");
         deposits[msg.sender] = msg.value;
 
@@ -51,8 +51,8 @@ contract GasGateway is IGasGateway, Ownable {
             gasStations[tokens[i]].push(msg.sender);
         }
 
-        if (msg.value > deposit_value) {
-            payable(msg.sender).sendValue(msg.value - deposit_value);
+        if (msg.value > depositValue) {
+            payable(msg.sender).sendValue(msg.value - depositValue);
         }
     }
 
@@ -63,11 +63,9 @@ contract GasGateway is IGasGateway, Ownable {
         deposits[msg.sender] = 0;
     }
 
-    function exchange(address wallet, IERC20 token, uint amount) external payable {
+    function exchange(address wallet, IERC20 token, uint256 amount) external payable {
         require(deposits[msg.sender] > 0, "Gas station is not registered");
-        uint comission = IGasStation(msg.sender).comission();
-        uint32 twapPeriod = IGasStation(msg.sender).twapPeriod();
-        uint ethAmount = priceOracle.getPriceInEth(address(token), amount, twapPeriod) * (10000 - comission) / 10000;
+        uint ethAmount = _getEthAmount(address(token), amount);
         require(msg.value >= ethAmount);
         SafeERC20.safeTransferFrom(token, wallet, address(this), amount);
         SafeERC20.safeTransfer(token, msg.sender, amount);
@@ -76,4 +74,15 @@ contract GasGateway is IGasGateway, Ownable {
             payable(msg.sender).sendValue(msg.value - ethAmount);
         }
     }
+
+    function _getEthAmount(address token, uint256 amount) internal view returns (uint256 ethAmount) {
+      uint comission = IGasStation(msg.sender).comission();
+      uint32 twapPeriod = IGasStation(msg.sender).twapPeriod();
+      ethAmount = priceOracle.getPriceInEth(address(token), amount, twapPeriod) * (10000 - comission) / 10000;
+    }
+    
+    function getEthAmount(address token, uint256 amount) external view returns (uint256 ethAmount) {
+      ethAmount = _getEthAmount(token, amount);
+    }
+
 }
