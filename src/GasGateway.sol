@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "solady/src/auth/Ownable.sol";
-import "solady/src/utils/SafeTransferLib.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 interface IGasStation {
     function tokens() external returns (address[] memory);
@@ -14,11 +15,11 @@ interface IGasStation {
 interface IGasGateway {
     function register() external payable;
     function deList() external;
-    function exchange(address wallet, address token, uint amount) external payable;
+    function exchange(address wallet, IERC20 token, uint amount) external payable;
 }
 
 interface IPriceOracle {
-    function getPriceInEth(address token, uint amount) external view returns (uint);
+    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint);
 }
 
 contract GasGateway is IGasGateway, Ownable {
@@ -62,23 +63,17 @@ contract GasGateway is IGasGateway, Ownable {
         deposits[msg.sender] = 0;
     }
 
-    function exchange(address wallet, address token, uint amount) external payable {
+    function exchange(address wallet, IERC20 token, uint amount) external payable {
         require(deposits[msg.sender] > 0, "Gas station is not registered");
         uint comission = IGasStation(msg.sender).comission();
         uint32 twapPeriod = IGasStation(msg.sender).twapPeriod();
-        uint ethAmount = priceOracle.getPriceInEth(token, amount, twapPeriod) * (10000 - comission) / 10000;
+        uint ethAmount = priceOracle.getPriceInEth(address(token), amount, twapPeriod) * (10000 - comission) / 10000;
         require(msg.value >= ethAmount);
-        SafeTransferLib.safeTransferFrom(token, wallet, address(this), amount);
-        SafeTransferLib.safeTransfer(token, msg.sender, amount);
+        SafeERC20.safeTransferFrom(token, wallet, address(this), amount);
+        SafeERC20.safeTransfer(token, msg.sender, amount);
         payable(wallet).sendValue(ethAmount);
         if (msg.value > ethAmount) {
             payable(msg.sender).sendValue(msg.value - ethAmount);
         }
     }
-
-    function getEthAmount(address token, uint amount, uint comission) external view returns (uint) {
-        return priceOracle.getPriceInEth(token, amount) * (10000 - comission) / 10000;
-    }
-
-
 }
