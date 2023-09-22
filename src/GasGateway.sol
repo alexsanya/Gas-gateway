@@ -25,17 +25,18 @@ interface IPriceOracle {
 contract GasGateway is IGasGateway, Ownable {
     using Address for address payable;
 
-    uint public depositValue;
+    uint256 public depositValue;
     IPriceOracle immutable priceOracle;
     mapping(address => address[]) public gasStations;
     mapping(address => uint) private deposits;
     mapping(address => bool) public deListedGasStations;
 
-    constructor(IPriceOracle _priceOracle) Ownable() {
+    constructor(IPriceOracle _priceOracle, uint256 _depositValue) Ownable() {
         priceOracle = _priceOracle;
+        depositValue = _depositValue;
     }
 
-    function setDeposit(uint value) external onlyOwner {
+    function setDeposit(uint256 value) external onlyOwner {
         depositValue = value;
     }
 
@@ -66,7 +67,7 @@ contract GasGateway is IGasGateway, Ownable {
     function exchange(address wallet, IERC20 token, uint256 amount) external payable {
         require(deposits[msg.sender] > 0, "Gas station is not registered");
         uint ethAmount = _getEthAmount(address(token), amount);
-        require(msg.value >= ethAmount);
+        require(msg.value >= ethAmount, "Not enough ETH provided");
         SafeERC20.safeTransferFrom(token, wallet, address(this), amount);
         SafeERC20.safeTransfer(token, msg.sender, amount);
         payable(wallet).sendValue(ethAmount);
