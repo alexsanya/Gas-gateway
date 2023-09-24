@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 interface IGasStation {
-    function tokens() external view returns (address[] memory);
+    function getTokens() external view returns (address[] memory);
     function comission() external view returns (uint);
     function twapPeriod() external view returns (uint32);
 }
@@ -46,7 +46,7 @@ contract GasGateway is IGasGateway, Ownable {
         require(deposits[msg.sender] == 0, "Already registered");
         deposits[msg.sender] = msg.value;
 
-        address[] memory tokens = IGasStation(msg.sender).tokens();
+        address[] memory tokens = IGasStation(msg.sender).getTokens();
 
         for (uint i=0; i<tokens.length; i++) {
             gasStations[tokens[i]].push(msg.sender);

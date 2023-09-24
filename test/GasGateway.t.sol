@@ -20,7 +20,7 @@ contract GasGatewayTest is Test {
   IERC20 constant usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
   address constant USDC_WHALE = address(0xDa9CE944a37d218c3302F6B82a094844C6ECEb17);
 
-  function tokens() external pure returns (address[] memory) {
+  function getTokens() external pure returns (address[] memory) {
     address[] memory _tokens = new address[](1);
     _tokens[0] = address(usdc);
     return _tokens;

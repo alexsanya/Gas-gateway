@@ -20,20 +20,26 @@ contract GasStation is Ownable, Initializable {
   address[] public tokens;
   IGasGateway gasGateway;
   uint16 public comission;
-  uint32 twapPeriod;
-  string apiRoot;
+  uint32 public twapPeriod;
+  string public apiRoot;
 
-  constructor(address[] memory _tokens, uint16 _comission, uint32 _twapPeriod, string memory _apiRoot) Ownable() {
+  constructor(address[] memory _tokens, uint16 _comission, uint32 _twapPeriod, string memory _apiRoot) payable Ownable() {
     require(_comission < 10000, "Comission cannot exceed 100%");
     require(_tokens.length > 0, "Should support at least 1 token");
-    tokens = tokens;
+    for (uint8 i=0; i < _tokens.length; i++) {
+      tokens.push(_tokens[i]);
+    }
     comission = _comission;
     twapPeriod = _twapPeriod;
     apiRoot = _apiRoot;
   }
 
-  function register(IGasGateway _gasGateway) external payable initializer onlyOwner initializer {
-    require(msg.value > _gasGateway.depositValue(), "Not enough eth for deposit");
+  function getTokens() external view returns (address[] memory) {
+    return tokens;
+  }
+
+  function register(IGasGateway _gasGateway) external payable initializer onlyOwner {
+    require(msg.value >= _gasGateway.depositValue(), "Not enough eth for deposit");
     _gasGateway.register{value: msg.value}();
     gasGateway = _gasGateway;
   }
