@@ -5,22 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "./Interfaces.sol";
 
-interface IGasStation {
-    function getTokens() external view returns (address[] memory);
-    function comission() external view returns (uint);
-    function twapPeriod() external view returns (uint32);
-}
-
-interface IGasGateway {
-    function register() external payable;
-    function deList() external;
-    function exchange(address wallet, IERC20 token, uint amount) external payable;
-}
-
-interface IPriceOracle {
-    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint256);
-}
 
 contract GasGateway is IGasGateway, Ownable {
     using Address for address payable;
@@ -64,12 +50,12 @@ contract GasGateway is IGasGateway, Ownable {
         deposits[msg.sender] = 0;
     }
 
-    function exchange(address wallet, IERC20 token, uint256 amount) external payable {
+    function exchange(address wallet, address token, uint256 amount) external payable {
         require(deposits[msg.sender] > 0, "Gas station is not registered");
-        uint ethAmount = _getEthAmount(address(token), amount);
+        uint ethAmount = _getEthAmount(token, amount);
         require(msg.value >= ethAmount, "Not enough ETH provided");
-        SafeERC20.safeTransferFrom(token, wallet, address(this), amount);
-        SafeERC20.safeTransfer(token, msg.sender, amount);
+        SafeERC20.safeTransferFrom(IERC20(token), wallet, address(this), amount);
+        SafeERC20.safeTransfer(IERC20(token), msg.sender, amount);
         payable(wallet).sendValue(ethAmount);
         if (msg.value > ethAmount) {
             payable(msg.sender).sendValue(msg.value - ethAmount);

@@ -5,20 +5,14 @@ import "@openzeppelin/contracts/interfaces/IERC2612.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-interface IGasGateway {
-  function depositValue() external view returns (uint);
-  function register() external payable;
-  function deList() external;
-  function getEthAmount(address, uint256) external returns (uint256);
-  function exchange(address wallet, address token, uint amount) external payable;
-}
+import "@openzeppelin/contracts/utils/Address.sol";
+import "./Interfaces.sol";
 
 contract GasStation is Ownable, Initializable {
   using Address for address payable;
 
   address[] public tokens;
-  IGasGateway gasGateway;
+  IGasGateway public gasGateway;
   uint16 public comission;
   uint32 public twapPeriod;
   string public apiRoot;

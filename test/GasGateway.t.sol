@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 import "../src/GasGateway.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 contract MockPriceOracle {
   function getPriceInEth(address token, uint amount, uint32 twapPeriod) external pure returns (uint256) {
@@ -74,7 +75,7 @@ contract GasGatewayTest is Test {
 
   function test_exchangeShouldRevertIfGasStationIsNotRegistered() public {
     vm.expectRevert("Gas station is not registered");
-    gasGateway.exchange(USDC_WHALE, usdc, 100e6);
+    gasGateway.exchange(USDC_WHALE, address(usdc), 100e6);
   }
 
   function test_exchangeShouldFailIfAmountIsLessThanRequired() public {
@@ -82,7 +83,7 @@ contract GasGatewayTest is Test {
     gasGateway.register{value: gasGateway.depositValue()}();
     uint256 ethRequired = gasGateway.getEthAmount(address(usdc), amount);
     vm.expectRevert("Not enough ETH provided");
-    gasGateway.exchange{value: ethRequired - 1}(USDC_WHALE, usdc, amount);
+    gasGateway.exchange{value: ethRequired - 1}(USDC_WHALE, address(usdc), amount);
   }
 
   function test_exchangeUSDCToEth() public {
@@ -95,11 +96,23 @@ contract GasGatewayTest is Test {
     uint256 walletUsdcBefore = usdc.balanceOf(USDC_WHALE); 
     uint256 gasStationEthBefore = address(this).balance;
     uint256 gasStationUsdcBefore = usdc.balanceOf(address(this));
-    gasGateway.exchange{value: ethRequired}(USDC_WHALE, IERC20(usdc), amount);
+    gasGateway.exchange{value: ethRequired}(USDC_WHALE, address(usdc), amount);
     assertEq(USDC_WHALE.balance, walletEthBefore + ethRequired);
     assertEq(usdc.balanceOf(USDC_WHALE), walletUsdcBefore - amount);
     assertEq(address(this).balance, gasStationEthBefore - ethRequired);
     assertEq(usdc.balanceOf(address(this)), gasStationUsdcBefore + amount);
   }
+
+  function test_revertSetDepositIfSenderIsNotAnOwner() public {
+    vm.prank(USDC_WHALE);
+    vm.expectRevert("Ownable: caller is not the owner");
+    gasGateway.setDeposit(123);
+  }
+
+  function test_detDepositShouldChangeADepositValue() public {
+    gasGateway.setDeposit(123);
+    assertEq(gasGateway.depositValue(), 123);
+  }
+
 
 }
