@@ -12,7 +12,9 @@ contract PriceOracleTest is Test {
       priceOracle = new PriceOracle();
     }
 
-    function testGetPrice() public view {
+    function testGetPrice() public {
+      //log_bytes(address(priceOracle).code);
+      //log_bytes(vm.getCode("PriceOracle.sol:PriceOracle"));
       console.logString("testGetPrice");
       uint256 weiAmount = priceOracle.getPriceInEth(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 100000000, 180);
       console2.log("weiAmount: %s", weiAmount);
