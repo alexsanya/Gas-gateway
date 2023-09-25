@@ -16,5 +16,6 @@ interface IGasGateway {
 }
 
 interface IPriceOracle {
-    function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint256);
+  function WETH() external view returns (address);
+  function getPriceInEth(address token, uint amount, uint32 twapPeriod) external view returns (uint256);
 }

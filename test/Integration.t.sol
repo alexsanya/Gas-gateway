@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 import "forge-std/Test.sol";
 
-//import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "solmate/tokens/ERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
@@ -18,7 +17,7 @@ contract IntegrationTest is Test {
   IERC20 constant usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
   address constant WALLET = address(0x1);
   address constant PRICE_ORACLE = address(0x2);
-  IPriceOracle constant priceOracle = IPriceOracle(PRICE_ORACLE);
+  IPriceOracle priceOracle;
 
 
   //PriceOracle priceOracle;
@@ -26,15 +25,14 @@ contract IntegrationTest is Test {
   GasStation gasStation;
 
   function setUp() public {
-    vm.etch(PRICE_ORACLE, vm.getCode("PriceOracle.sol:PriceOracle"));
 
-
-      console.logString("testGetPrice from Integration test");
-      uint256 weiAmount = priceOracle.getPriceInEth(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 100000000, 180);
-      console2.log("weiAmount: %s", weiAmount);
-      console2.log("equal price: %s", weiAmount * 161547 / 10**20);
-
-
+    // Deploy
+    bytes memory bytecode = abi.encodePacked(vm.getCode("PriceOracle.sol"));
+    address deployed;
+    assembly {
+        deployed := create(0, add(bytecode, 0x20), mload(bytecode))
+    }
+    priceOracle = IPriceOracle(deployed);
 
     gasGateway = new GasGateway(priceOracle, DEPOSIT_VALUE);
 
@@ -46,7 +44,7 @@ contract IntegrationTest is Test {
     payable(WALLET).sendValue(2 ether);
   }
 
-  function shouldExchangeUsdcToEth() public {
+  function test_shouldExchangeUsdcToEth() public {
     //gasStation.exchange();
   }
 }
