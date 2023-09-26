@@ -38,7 +38,7 @@ contract IntegrationTest is Test {
 
     address[] memory tokens = new address[](1);
     tokens[0] = address(usdc);
-    gasStation = new GasStation{value: GAS_STATION_ETH_BALANCE}(tokens, 500, 180, "apiRoot");
+    gasStation = new GasStation{value: GAS_STATION_ETH_BALANCE}(tokens, 5000, 180, "apiRoot");
     gasStation.register{value: DEPOSIT_VALUE}(gasGateway);
 
 
@@ -60,12 +60,15 @@ contract IntegrationTest is Test {
     bytes32 digest = sigUtils.getTypedDataHash(permit);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(WALLET_PRIVATE_KEY, digest);
 
+    assertEq(wallet.balance, 0);
     uint256 gasStationEthBalanceBefore = address(gasStation).balance;
     gasStation.exchange(wallet, IERC2612(address(usdc)), 100e6, block.timestamp + 1 days, v, r, s);
 
     assertEq(usdc.balanceOf(wallet), 50e6);
     assertEq(usdc.balanceOf(address(gasStation)), 100e6);
     assertEq(wallet.balance, gasStationEthBalanceBefore - address(gasStation).balance);
+
+    console2.log("100 USDC been exchanged with comission of %s percent to %s wei", 50, wallet.balance);
 
   }
 }
