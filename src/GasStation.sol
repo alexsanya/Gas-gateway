@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./Interfaces.sol";
 
-contract GasStation is Ownable, Initializable {
+contract GasStation is IGasStation, Ownable, Initializable {
   using Address for address payable;
 
   address[] public tokens;
