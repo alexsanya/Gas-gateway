@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/interfaces/IERC2612.sol";
 
 import './SigUtils.sol';
+import './ChainlinkPriceFeed.sol';
 import '../src/GasGateway.sol';
 import '../src/GasStation.sol';
 import '../src/Interfaces.sol';
@@ -22,11 +23,13 @@ contract IntegrationTest is Test {
   uint256 WALLET_PRIVATE_KEY = 0xA11CE;
   address wallet;
   IPriceOracle priceOracle;
+  ChainlinkPriceFeed chainlinkPriceFeed;
   SigUtils sigUtils;
   GasGateway gasGateway;
   GasStation gasStation;
 
   function setUp() public {
+    chainlinkPriceFeed = new ChainlinkPriceFeed();
     bytes memory bytecode = abi.encodePacked(vm.getCode("PriceOracle.sol"));
     address deployed;
     assembly {
@@ -68,7 +71,8 @@ contract IntegrationTest is Test {
     assertEq(usdc.balanceOf(address(gasStation)), 100e6);
     assertEq(wallet.balance, gasStationEthBalanceBefore - address(gasStation).balance);
 
-    console2.log("100 USDC been exchanged with comission of %s percent to %s wei", 50, wallet.balance);
+    uint256 usdWorth = chainlinkPriceFeed.getEthPriceInUsd() * wallet.balance / 10**18;
+    console2.log("100 USDC been exchanged with comission of %s percent to %s wei worth of %s cents", 50, wallet.balance, usdWorth);
 
   }
 }
