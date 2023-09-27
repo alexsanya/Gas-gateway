@@ -57,6 +57,7 @@ contract GasStation is IGasStation, Ownable, Initializable {
   }
 
   function exchange(address _wallet, IERC2612 token, uint256 tokenAmount, uint256 _deadline, uint8 v, bytes32 r, bytes32 s) external {
+    require(address(gasGateway) != address(0), "Gas station is not registered");
     token.permit(
         _wallet,
         address(gasGateway),

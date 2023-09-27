@@ -150,8 +150,10 @@ contract GasStationTest is IGasGateway, Test {
     assertEq(address(this).balance, balanceBefore + 3 ether);
   }
 
-  function test_Exchange() public {
-
+  function test_shoulRevertExchangeIfGasStationIsNotRegistered() public {
+    GasStation gasStation = new GasStation{value: 3 ether}(tokens, 500, 180, "api");
+    vm.expectRevert("Gas station is not registered");
+    gasStation.exchange(address(0x1), IERC2612(address(0x2)), 100, block.timestamp, 0, 0, 0);
   }
 
 

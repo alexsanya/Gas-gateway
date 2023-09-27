@@ -19,7 +19,6 @@ contract IntegrationTest is Test {
   uint256 constant GAS_STATION_ETH_BALANCE = 10 ether;
   ERC20 constant usdc = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
   address constant USDC_WHALE = address(0xDa9CE944a37d218c3302F6B82a094844C6ECEb17);
-  address constant PRICE_ORACLE = address(0x2);
   uint256 WALLET_PRIVATE_KEY = 0xA11CE;
   address wallet;
   IPriceOracle priceOracle;
