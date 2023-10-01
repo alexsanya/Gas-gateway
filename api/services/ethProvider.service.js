@@ -7,25 +7,14 @@ const { PROVIDER_URL, GAS_STATION_ADDRESS, SIGNER_PRIVATE_KEY } = config;
 const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
 
 const GasGatewayAbi = [
-  "function checkPermit(\
-      address owner,\
-      address spender,\
-      ERC20 token,\
-      uint256 value,\
-      uint256 deadline,\
-      uint8 v,\
-      bytes32 r,\
-      bytes32 s\
-    ) external view;\
-  ",
-  "function getEthAmount(address token, uint256 amount) external view returns (uint256 ethAmount)"
+  "function checkPermit(address,address,address,uint256,uint256,uint8,bytes32,bytes32) external view"
 ]
 
 const GasStationAbi = [
-  "function gasGateway() public view returns (address)",
+  "function gasGateway() external view returns (address)",
   "function exchange(\
       address _wallet,\
-      IERC2612 token,\
+      address token,\
       uint256 tokenAmount,\
       uint256 _deadline,\
       uint8 v,\
@@ -47,13 +36,14 @@ export default {
       signature
     } = input;
     
-    const gatewayContract = new Contract(await gasStationContract.gasGateway(), GasGatewayAbi, provider);
+    const gasGatewayAddress = await gasStationContract.gasGateway();
+    const gatewayContract = new Contract(gasGatewayAddress, GasGatewayAbi, provider);
 
     const { v, r, s } = util.fromRpcSig(signature);
     try {
       await gatewayContract.checkPermit(
         wallet,
-        GAS_GATEWAY_ADDRESS,
+        gasGatewayAddress,
         token,
         value,
         deadline,
@@ -62,6 +52,9 @@ export default {
         s,
       );
     } catch (error) {
+      if (error.reason) {
+        throw new Error(error.reason);
+      }
       if (error.data) {
         const decodedError = gatewayContract.interface.parseError(error.data);
         throw new Error(decodedError.name);
