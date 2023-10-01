@@ -51,20 +51,22 @@ contract IntegrationTest is Test {
   function test_shouldExchangeUsdcToEth() public {
     vm.prank(USDC_WHALE);
     usdc.transfer(wallet, 150e6);
+    uint256 deadline = block.timestamp + 1 days;
     SigUtils.Permit memory permit = SigUtils.Permit({
         owner: wallet,
         spender: address(gasGateway),
         value: 100e6,
         nonce: 0,
-        deadline: block.timestamp + 1 days
+        deadline: deadline
     });
 
     bytes32 digest = sigUtils.getTypedDataHash(permit);
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(WALLET_PRIVATE_KEY, digest);
-
     assertEq(wallet.balance, 0);
     uint256 gasStationEthBalanceBefore = address(gasStation).balance;
-    gasStation.exchange(wallet, IERC2612(address(usdc)), 100e6, block.timestamp + 1 days, v, r, s);
+    bool isVerified = gasGateway.checkPermit(wallet, address(gasGateway), usdc, 100e6, deadline, v, r, s);
+    assertEq(isVerified, true);
+    gasStation.exchange(wallet, IERC2612(address(usdc)), 100e6, deadline, v, r, s);
 
     assertEq(usdc.balanceOf(wallet), 50e6);
     assertEq(usdc.balanceOf(address(gasStation)), 100e6);

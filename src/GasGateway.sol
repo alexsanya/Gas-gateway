@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/interfaces/IERC20.sol";
+import "solmate/tokens/ERC20.sol";
 import "./Interfaces.sol";
 
 
@@ -70,6 +70,52 @@ contract GasGateway is IGasGateway, Ownable {
     
     function getEthAmount(address token, uint256 amount) external view returns (uint256 ethAmount) {
       ethAmount = _getEthAmount(token, amount);
+    }
+
+    function checkPermit(
+      address owner,
+      address spender,
+      ERC20 token,
+      uint256 value,
+      uint256 deadline,
+      uint8 v,
+      bytes32 r,
+      bytes32 s
+    ) external view returns (bool) {
+      require(deadline >= block.timestamp, "PERMIT_DEADLINE_EXPIRED");
+      require(token.balanceOf(owner) >= value);
+
+
+      // Unchecked because the only math done is incrementing
+      // the owner's nonce which cannot realistically overflow.
+
+      uint256 nonce = token.nonces(owner);
+      unchecked {
+        address recoveredAddress = ecrecover(
+          keccak256(
+            abi.encodePacked(
+              "\x19\x01",
+              token.DOMAIN_SEPARATOR(),
+              keccak256(
+                abi.encode(
+                  keccak256(
+                      "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
+                  ),
+                  owner,
+                  spender,
+                  value,
+                  nonce,
+                  deadline
+                )
+              )
+            )
+          ),
+          v,
+          r,
+          s
+        );
+        return recoveredAddress != address(0) && recoveredAddress == owner;
+      }
     }
 
 }
