@@ -81,9 +81,9 @@ contract GasGateway is IGasGateway, Ownable {
       uint8 v,
       bytes32 r,
       bytes32 s
-    ) external view returns (bool) {
+    ) external view {
       require(deadline >= block.timestamp, "PERMIT_DEADLINE_EXPIRED");
-      require(token.balanceOf(owner) >= value);
+      require(token.balanceOf(owner) >= value, "INSUFFICIENT_BALANCE");
 
 
       // Unchecked because the only math done is incrementing
@@ -114,7 +114,7 @@ contract GasGateway is IGasGateway, Ownable {
           r,
           s
         );
-        return recoveredAddress != address(0) && recoveredAddress == owner;
+        require(recoveredAddress != address(0) && recoveredAddress == owner, "INVALID_SIGNER");
       }
     }
 
