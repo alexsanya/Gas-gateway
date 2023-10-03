@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "solmate/tokens/ERC20.sol";
 import "./Interfaces.sol";
 
-
 contract GasGateway is IGasGateway, Ownable {
     using Address for address payable;
 

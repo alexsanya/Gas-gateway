@@ -37,8 +37,12 @@ async function validateInput(input) {
 
 }
 
-async function exchange(params) {
-  await ethProvider.exchange(input);
+async function exchange(input) {
+  try {
+    await ethProvider.exchange(input);
+  } catch (error) {
+    throw new Error(error.message);
+  }
 
   return { transaction: 'OK' }
 }

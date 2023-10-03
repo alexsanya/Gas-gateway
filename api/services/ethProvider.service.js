@@ -22,7 +22,7 @@ const GasStationAbi = [
       bytes32 s) external"
 ]
 
-const signer = new Wallet(SIGNER_PRIVATE_KEY);
+const signer = new Wallet(SIGNER_PRIVATE_KEY, provider);
 
 const gasStationContract = new Contract(GAS_STATION_ADDRESS, GasStationAbi, provider);
 
@@ -49,15 +49,11 @@ export default {
         deadline,
         v,
         r,
-        s,
+        s
       );
     } catch (error) {
       if (error.reason) {
         throw new Error(error.reason);
-      }
-      if (error.data) {
-        const decodedError = gatewayContract.interface.parseError(error.data);
-        throw new Error(decodedError.name);
       } else {
         throw new Error(error.message);
       }
@@ -74,7 +70,23 @@ export default {
     } = input;
 
     const { v, r, s } = util.fromRpcSig(signature);
-    await gasStationContract.connect(signer).exchange(wallet, token, amount, deadline, v, r, s);
+    try {
+      await gasStationContract.connect(signer).exchange(
+        wallet,
+        token,
+        value,
+        deadline,
+        v,
+        r,
+        s
+      );
+    } catch (error) {
+      if (error.reason) {
+        throw new Error(error.reason);
+      } else {
+        throw new Error(error.message);
+      }
+    }
 
   }
 }
