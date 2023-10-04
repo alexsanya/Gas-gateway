@@ -39,20 +39,22 @@ async function setUp() {
   const priceOracleAddress = await priceOracleContract.address;
   const gasGatewayContract = await deployContract('GasGateway', gasGatewayArtifact, priceOracleAddress, DEPOSIT_VALUE);
   const gasGatewayAddress = await gasGatewayContract.address;
-  const gasStationContract = await deployContract('GasStation', gasStationArtifact, [USDC], 5000, 180, "apiRoot");
-  const gasStationAddress = await gasStationContract.address;
+
+  const gasStationAddress = await gasGatewayContract.connect(signer).callStatic.create([USDC], 5000, 180, "apiRoot", { value: DEPOSIT_VALUE });
+  let tx = await gasGatewayContract.connect(signer).create([USDC], 5000, 180, "apiRoot", { value: DEPOSIT_VALUE });
+  await tx.wait();
+  console.log({ gasStationAddress });
+  const gasStationContract = new Contract(gasStationAddress, gasStationArtifact.abi, provider);
+
   const fundUSDCcontract = await deployContract('FundUSDC', fundUSDCArtifact);
   // fund gas station
-  let tx = await signer.sendTransaction({
+  tx = await signer.sendTransaction({
     to: gasStationAddress,
     value: 2n * DEPOSIT_VALUE
   });
   await tx.wait();
   console.log(`Gas station ${gasStationAddress} has a balance of ${await provider.getBalance(gasStationAddress)} wei`);
   
-  // register gas station
-  tx = await gasStationContract.register(gasGatewayAddress, { value: DEPOSIT_VALUE });
-  await tx.wait();
   //fund wallet with USDC
   tx = await fundUSDCcontract.swapExactOutputSingle(100e6, 2n * DEPOSIT_VALUE, { value: 2n * DEPOSIT_VALUE });
   await tx.wait();

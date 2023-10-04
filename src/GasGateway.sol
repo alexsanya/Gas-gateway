@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "solmate/tokens/ERC20.sol";
 import "./Interfaces.sol";
+import "./GasStation.sol";
 
 contract GasGateway is IGasGateway, Ownable {
     using Address for address payable;
@@ -25,13 +26,11 @@ contract GasGateway is IGasGateway, Ownable {
         depositValue = value;
     }
 
-    function register() external payable {
-        require(payable(msg.sender).isContract(), "Sender is not a contract");
+    function create(address[] memory tokens, uint16 comission, uint32 twapPeriod, string memory apiRoot) external payable returns (address payable) {
         require(msg.value >= depositValue, "Not enough ETH for deposit");
-        require(deposits[msg.sender] == 0, "Already registered");
-        deposits[msg.sender] = msg.value;
-
-        address[] memory tokens = IGasStation(msg.sender).getTokens();
+        GasStation gasStation = new GasStation(tokens, comission, twapPeriod, apiRoot);
+        gasStation.transferOwnership(msg.sender);
+        deposits[address(gasStation)] = msg.value;
 
         for (uint i=0; i<tokens.length; i++) {
             gasStations[tokens[i]].push(msg.sender);
@@ -40,6 +39,8 @@ contract GasGateway is IGasGateway, Ownable {
         if (msg.value > depositValue) {
             payable(msg.sender).sendValue(msg.value - depositValue);
         }
+        
+        return payable(address(gasStation));
     }
 
     function deList() external {

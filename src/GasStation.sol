@@ -12,7 +12,7 @@ contract GasStation is IGasStation, Ownable, Initializable {
   using Address for address payable;
 
   address[] public tokens;
-  IGasGateway public gasGateway;
+  IGasGateway public immutable gasGateway;
   uint16 public comission;
   uint32 public twapPeriod;
   string public apiRoot;
@@ -23,6 +23,7 @@ contract GasStation is IGasStation, Ownable, Initializable {
     for (uint8 i=0; i < _tokens.length; i++) {
       tokens.push(_tokens[i]);
     }
+    gasGateway = IGasGateway(msg.sender);
     comission = _comission;
     twapPeriod = _twapPeriod;
     apiRoot = _apiRoot;
@@ -30,12 +31,6 @@ contract GasStation is IGasStation, Ownable, Initializable {
 
   function getTokens() external view returns (address[] memory) {
     return tokens;
-  }
-
-  function register(IGasGateway _gasGateway) external payable initializer onlyOwner {
-    require(msg.value >= _gasGateway.depositValue(), "Not enough eth for deposit");
-    _gasGateway.register{value: msg.value}();
-    gasGateway = _gasGateway;
   }
 
   function deList() external onlyOwner {

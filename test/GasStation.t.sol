@@ -25,10 +25,11 @@ contract GasStationTest is IGasGateway, Test {
     token = new TestToken();
     payable(IMPOSTER).sendValue(2 ether);
     gasStation = new GasStation{value: 3 ether}(tokens, 500, 180, "api");
-    gasStation.register{value: depositValue}(IGasGateway(this));
   }
 
-  function register() external payable {}
+  function create(address[] memory tokens, uint16 comission, uint32 twapPeriod, string memory apiRoot) external payable returns (address payable) {
+    return payable(address(0));
+  }
 
   function deList() external {}
 
@@ -54,29 +55,6 @@ contract GasStationTest is IGasGateway, Test {
     assertEq(gasStation.apiRoot(), "api");
     assertEq(gasStation.getTokens(), tokens);
     assertEq(address(gasStation).balance, 3 ether);
-  }
-
-  function test_RevertRegisterIfSenderIsNotAnOwner() public {
-    GasStation gasStation = new GasStation(tokens, 500, 180, "api");
-    vm.prank(IMPOSTER);
-    vm.expectRevert("Ownable: caller is not the owner");
-    gasStation.register{value: depositValue}(IGasGateway(this));
-  }
-
-  function test_RevertRegisterIfNotEnoughEthProvided() public {
-    GasStation gasStation = new GasStation(tokens, 500, 180, "api");
-    vm.expectRevert("Not enough eth for deposit");
-    gasStation.register{value: depositValue - 1}(IGasGateway(this));
-  }
-
-  function test_RegisterGasStation() public {
-    GasStation gasStation = new GasStation(tokens, 500, 180, "api");
-    gasStation.register{value: depositValue}(IGasGateway(this));
-  }
-
-  function test_RevertWhenRegisteringSameGasStationTwice() public {
-    vm.expectRevert("Initializable: contract is already initialized");
-    gasStation.register{value: depositValue}(IGasGateway(this));
   }
 
   function test_RevertDeListIfSenderIsNotOwner() public {
@@ -149,12 +127,4 @@ contract GasStationTest is IGasGateway, Test {
     assertEq(address(gasStation).balance, 0);
     assertEq(address(this).balance, balanceBefore + 3 ether);
   }
-
-  function test_shoulRevertExchangeIfGasStationIsNotRegistered() public {
-    GasStation gasStation = new GasStation{value: 3 ether}(tokens, 500, 180, "api");
-    vm.expectRevert("Gas station is not registered");
-    gasStation.exchange(address(0x1), IERC2612(address(0x2)), 100, block.timestamp, 0, 0, 0);
-  }
-
-
 }
