@@ -40,13 +40,15 @@ contract IntegrationTest is Test {
 
     address[] memory tokens = new address[](1);
     tokens[0] = address(usdc);
-    gasStation = new GasStation{value: GAS_STATION_ETH_BALANCE}(tokens, 5000, 180, "apiRoot");
-    gasStation.register{value: DEPOSIT_VALUE}(gasGateway);
+    gasStation = GasStation(gasGateway.create{value: DEPOSIT_VALUE}(tokens, 5000, 180, "apiRoot"));
 
+    payable(gasStation).sendValue(GAS_STATION_ETH_BALANCE);
 
     sigUtils = new SigUtils(usdc.DOMAIN_SEPARATOR());
     wallet = vm.addr(WALLET_PRIVATE_KEY);
   }
+
+  receive() external payable {}
 
   function test_shouldExchangeUsdcToEth() public {
     vm.prank(USDC_WHALE);
@@ -64,8 +66,17 @@ contract IntegrationTest is Test {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(WALLET_PRIVATE_KEY, digest);
     assertEq(wallet.balance, 0);
     uint256 gasStationEthBalanceBefore = address(gasStation).balance;
-    bool isVerified = gasGateway.checkPermit(wallet, address(gasGateway), usdc, 100e6, deadline, v, r, s);
-    assertEq(isVerified, true);
+    gasGateway.checkPermit(wallet, address(gasGateway), usdc, 100e6, deadline, v, r, s);
+
+
+    console2.log("Owner: %s", wallet);
+    console2.log("Deadline: %s", deadline);
+    console2.log("v: %s", v);
+    console2.log("r:");
+    console2.logBytes(abi.encode(r));
+    console2.log("s:");
+    console2.logBytes(abi.encode(s));
+
     gasStation.exchange(wallet, IERC2612(address(usdc)), 100e6, deadline, v, r, s);
 
     assertEq(usdc.balanceOf(wallet), 50e6);

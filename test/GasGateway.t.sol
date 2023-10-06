@@ -61,8 +61,8 @@ contract GasGatewayTest is Test {
   function test_exchangeShouldFailIfAmountIsLessThanRequired() public {
     uint256 amount = 100e6;
     uint256 ethRequired = gasGateway.getEthAmount(address(usdc), amount);
-    //TODO: Found slot number and mark test contract as registered
-    //vm.store(address(gasGateway), , bytes32(1));
+    //Found slot number and mark test contract as registered
+    vm.store(address(gasGateway), keccak256(abi.encode(address(this),uint256(3))), bytes32(uint256(1)));
     vm.expectRevert("Not enough ETH provided");
     gasGateway.exchange{value: ethRequired - 1}(USDC_WHALE, address(usdc), amount);
   }
@@ -76,8 +76,8 @@ contract GasGatewayTest is Test {
     uint256 walletUsdcBefore = usdc.balanceOf(USDC_WHALE); 
     uint256 gasStationEthBefore = address(this).balance;
     uint256 gasStationUsdcBefore = usdc.balanceOf(address(this));
-    //TODO: Found slot number and mark test contract as registered
-    //vm.store(address(gasGateway), , bytes32(1));
+    //Found slot number and mark test contract as registered
+    vm.store(address(gasGateway), keccak256(abi.encode(address(this),uint256(3))), bytes32(uint256(1)));
     gasGateway.exchange{value: ethRequired}(USDC_WHALE, address(usdc), amount);
     assertEq(USDC_WHALE.balance, walletEthBefore + ethRequired);
     assertEq(usdc.balanceOf(USDC_WHALE), walletUsdcBefore - amount);
