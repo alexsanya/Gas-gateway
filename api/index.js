@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import config from './config.js';
 import { getLogger } from './utils/logger.util.js';
 import ExchangeRoute from './routes/exchange.route.js';
+import StatusRoute from './routes/status.route.js';
 
 const logger = getLogger('server');
 
@@ -10,6 +11,7 @@ const fastify = Fastify({
 })
 
 fastify.register(ExchangeRoute);
+fastify.register(StatusRoute);
 
 const { PORT } = config;
 

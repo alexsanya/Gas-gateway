@@ -71,7 +71,7 @@ export default {
 
     const { v, r, s } = util.fromRpcSig(signature);
     try {
-      await gasStationContract.connect(signer).exchange(
+      const tx = await gasStationContract.connect(signer).exchange(
         wallet,
         token,
         value,
@@ -80,6 +80,7 @@ export default {
         r,
         s
       );
+      return tx.hash;
     } catch (error) {
       if (error.reason) {
         throw new Error(error.reason);
